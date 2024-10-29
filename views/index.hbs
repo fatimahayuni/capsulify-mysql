@@ -1,7 +1,7 @@
 {{#each combinations}}
-<div id="combo-{{this.combo_id}}">
-    <h2>Combination {{this.combo_num}}</h2>
-    <p id="combo-details-{{this.combo_id}}">
+<div id="combo-{{combo_num}}">
+    <h2>Combination {{combo_num}}</h2>
+    <p id="combo-details-{{combo_num}}">
         Bottom: {{this.bottom.name}} |
         Top: {{this.top.name}} |
         Shoes: {{this.shoes.name}} |
@@ -16,24 +16,24 @@
 
     <!-- Add layer form. JavaScript handles it without submitting to the server -->
     <div>
-        <label for="layers-{{this.combo_id}}">Add Layer:</label>
-        <select id="layers-{{this.combo_id}}" name="layer_id-{{this.combo_id}}">
+        <label>Add Layer:</label>
+        <select id="layers-{{this.combo_num}}" name="layer_id-{{this.combo_num}}">
             <option value="">Select a layer</option>
             {{#each ../layers}}
             <option value="{{this.item_id}}">{{this.clothing_name}}</option>
             {{/each}}
         </select>
-        <button type="button" onclick="addLayer('{{this.combo_id}}')">Add Layer</button>
+        <button type="button" onclick="addLayer('{{this.combo_num}}')">Add Layer</button>
     </div>
 
     <!-- Form to mark as favorite, goes to the server when submitted -->
     <form action="/favorite" method="POST" style="display:inline;">
-        <input type="hidden" name="combo_id" value="{{this.combo_id}}">
-        <input type="hidden" name="bottom_id" value="{{this.bottom_id}}">
-        <input type="hidden" name="top_id" value="{{this.top_id}}">
-        <input type="hidden" name="shoes_id" value="{{this.shoes_id}}">
-        <input type="hidden" name="bag_id" value="{{this.bag_id}}">
-        <input type="hidden" id="layer-input-{{this.combo_id}}" name="layer_id" value="{{this.layer.id}}">
+        <input type="hidden" name="combo_num" value="{{this.combo_num}}">
+        <input type="hidden" name="bottom_id" value="{{this.bottom.id}}">
+        <input type="hidden" name="top_id" value="{{this.top.id}}">
+        <input type="hidden" name="shoes_id" value="{{this.shoes.id}}">
+        <input type="hidden" name="bag_id" value="{{this.bag.id}}">
+        <input type="hidden" id="layer-input-{{this.combo_num}}" name="layer_id" value="{{this.layer.id}}">
         <button type="submit">Favorite</button>
     </form>
 </div>

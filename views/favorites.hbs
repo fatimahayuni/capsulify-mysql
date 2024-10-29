@@ -1,0 +1,38 @@
+{{extends "base"}}
+<h1>Your Favorite Outfits</h1>
+{{#if favorites.length}}
+<table>
+    <thead>
+        <tr>
+            <th>Combo Num</th>
+            <th>Bottom</th>
+            <th>Top</th>
+            <th>Bag</th>
+            <th>Shoes</th>
+            <th>Layer</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each favorites}}
+        <tr>
+            <td>{{this.combo_num}}</td>
+            <td>{{this.bottom_name}}</td>
+            <td>{{this.top_name}}</td>
+            <td>{{this.bag_name}}</td>
+            <td>{{this.shoes_name}}</td>
+            <td>{{this.layer_name}}</td>
+            <td>
+                <form action="/favorites/delete" method="POST">
+                    <input type="hidden" name="favorite_id" value="{{this.favorite_id}}">
+                    <button type="submit" class="delete-button">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+{{else}}
+<p>You have no favorite outfits yet!</p>
+{{/if}}
+{{/extends}}

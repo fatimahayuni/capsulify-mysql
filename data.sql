@@ -105,3 +105,25 @@ CREATE TABLE favorite (
     FOREIGN KEY (accessory_id) REFERENCES clothing_item(item_id)
 );
 
+-- JOIN TABLE FOR favorite and clothing_item TABLES.
+SELECT 
+    b.clothing_name AS bottom_name,
+    t.clothing_name AS top_name,
+    g.clothing_name AS bag_name,
+    s.clothing_name AS shoes_name,
+    l.clothing_name AS layer_name,
+    f.combo_num
+FROM 
+    favorite f
+LEFT JOIN 
+    clothing_item b ON f.bottom_id = b.item_id
+LEFT JOIN 
+    clothing_item t ON f.top_id = t.item_id
+LEFT JOIN 
+    clothing_item g ON f.bag_id = g.item_id
+LEFT JOIN 
+    clothing_item s ON f.shoes_id = s.item_id
+LEFT JOIN 
+    clothing_item l ON f.layer_id = l.item_id
+WHERE 
+    f.favorite_id IS NOT NULL;  

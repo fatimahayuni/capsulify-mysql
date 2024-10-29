@@ -107,22 +107,8 @@ const combinations = [
     }
 ];
 
-
-// Function to fetch layers
 async function getLayers() {
     const [rows] = await connection.query('SELECT item_id, clothing_name FROM clothing_item WHERE clothing_type = "layer"');
-    return rows;
-}
-
-// Function to fetch earrings
-async function getEarrings() {
-    const [rows] = await connection.query('SELECT item_id, clothing_name AS earring_name FROM clothing_item WHERE clothing_type = "earring"');
-    return rows;
-}
-
-// Function to fetch accessories
-async function getAccessories() {
-    const [rows] = await connection.query('SELECT item_id, clothing_name AS accessory_name FROM clothing_item WHERE clothing_type = "accessory"');
     return rows;
 }
 
@@ -134,16 +120,16 @@ async function main() {
         'password': process.env.DB_PASSWORD
     });
 
-    // Home route to fetch combinations and clothing items
+    // Home route to fetch client-side combinations and clothing items
     app.get('/combinations', async (req, res) => {
         const layers = await getLayers();
 
-        // note: When this line is executed, Express will look for the index.hbs file in the views directory, compile it, and inject the provided data (combinations, layers, and accessories) into the template.
+        // note: When this line is executed, Express will look for the index.hbs file in the views directory, compile it, and inject the provided data (combinations and layers) into the template.
         // The resulting HTML is then sent back to the client as the response to their HTTP request.
         res.render('index', { combinations, layers });
     });
 
-    // Update route for clothing combinations
+    // Route to update the clothing combination. The user can only add layer. The rest of the clothing items are the basics: bottom, top, shoes, bags. Layer is optional.
     app.post('/update', async (req, res) => {
         const { combo_id,
             layers: selectedLayers }
@@ -157,7 +143,6 @@ async function main() {
         }
 
         // Update the combinations array
-        //todo is this even important? i guess once a user updates the combos, she will mark it as favorite. so leave it first?
         const updatedCombinations = combinations.map(combo => {
             if (combo.combo_id === combo_id) {
                 return {
@@ -180,32 +165,94 @@ async function main() {
 
     // Route to handle favoriting a combination and storing it in a database. 
     app.post('/favorite', async (req, res) => {
-        const { combo_id, bottom_id, top_id, shoes_id, bag_id, layer_id } = req.body;
-        console.log("Combo ID:", combo_id);
-        console.log("Bottom ID:", bottom_id);
-        console.log("Top ID:", top_id);
-        console.log("Shoes ID:", shoes_id);
-        console.log("Bag ID:", bag_id);
-        console.log("Layer ID:", layer_id);
+        const { combo_num, bottom_id, top_id, shoes_id, bag_id, layer_id } = req.body;
 
-        try {
-            // Insert favorite combo into database
-            const [result] = await connection.execute(`
-                INSERT INTO favorite (combo_id, bottom_id, top_id, shoes_id, bag_id, layer_id)
-                VALUES (?, ?, ?, ?, ?, ?)
-            `, [combo_id, bottom_id, top_id, shoes_id, bag_id, layer_id || null]); // Use null if layer_id is undefined
+        // Insert the favorite into the database
+        await connection.execute(`
+            INSERT INTO favorite (combo_num, bottom_id, top_id, shoes_id, bag_id, layer_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `, [combo_num, bottom_id, top_id, shoes_id, bag_id, layer_id || null]);
 
-            res.status(201).json({ message: "Favorite saved successfully!", favoriteId: result.insertId });
-        } catch (error) {
-            console.error("Error saving favorite:", error);
-            res.status(500).json({ message: "Error saving favorite." });
-        }
+        // Execute the query to fetch the favorites
+        const query = `
+            SELECT 
+                b.clothing_name AS bottom_name,
+                t.clothing_name AS top_name,
+                g.clothing_name AS bag_name,
+                s.clothing_name AS shoes_name,
+                l.clothing_name AS layer_name,
+                f.combo_num
+            FROM 
+                favorite f
+            LEFT JOIN 
+                clothing_item b ON f.bottom_id = b.item_id
+            LEFT JOIN 
+                clothing_item t ON f.top_id = t.item_id
+            LEFT JOIN 
+                clothing_item g ON f.bag_id = g.item_id
+            LEFT JOIN 
+                clothing_item s ON f.shoes_id = s.item_id
+            LEFT JOIN 
+                clothing_item l ON f.layer_id = l.item_id
+            WHERE 
+                f.favorite_id IS NOT NULL;  
+        `;
+
+        // Fetch the favorites data
+        const [favorites] = await connection.query(query);
+
+        // Render the favorites view with the retrieved data
+        res.render('favorites', { favorites });
     });
 
 
+    app.get('/favorites', async (req, res) => {
+        try {
+            const query = `
+            SELECT 
+                f.favorite_id,
+                b.clothing_name AS bottom_name,
+                t.clothing_name AS top_name,
+                g.clothing_name AS bag_name,
+                s.clothing_name AS shoes_name,
+                l.clothing_name AS layer_name,
+                f.combo_num
+            FROM 
+                favorite f
+            LEFT JOIN 
+                clothing_item b ON f.bottom_id = b.item_id
+            LEFT JOIN 
+                clothing_item t ON f.top_id = t.item_id
+            LEFT JOIN 
+                clothing_item g ON f.bag_id = g.item_id
+            LEFT JOIN 
+                clothing_item s ON f.shoes_id = s.item_id
+            LEFT JOIN 
+                clothing_item l ON f.layer_id = l.item_id
+            WHERE 
+                f.favorite_id IS NOT NULL;  
+                    `;
+
+            const [favorites] = await connection.query(query);
+            console.log(favorites);
+
+            res.render('favorites', { favorites });
+        } catch (error) {
+            console.error("Error fetching favorites:", error);
+            res.status(500).send("Error retrieving favorites data");
+        }
+    });
+
+    app.post('/favorites/delete', async (req, res) => {
+        const favoriteId = req.body.favorite_id;
+
+        await connection.query('DELETE FROM favorite WHERE favorite_id = ?', [favoriteId]);
+        res.redirect('/favorites');
+    })
+
 
     app.listen(3000, () => {
-        console.log('Server is running on http://localhost:3000');
+        console.log('Server is running on http://127.0.0.1:3000');
     });
 }
 
