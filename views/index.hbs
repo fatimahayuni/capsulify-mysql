@@ -1,0 +1,71 @@
+{{#each combinations}}
+<div id="combo-{{this.combo_id}}">
+    <h2>Combination {{this.combo_num}}</h2>
+    <p id="combo-details-{{this.combo_id}}">
+        Bottom: {{this.bottom.name}} |
+        Top: {{this.top.name}} |
+        Shoes: {{this.shoes.name}} |
+        Bag: {{this.bag.name}}
+        {{#if this.layer.name}} | Layer: {{this.layer.name}}{{/if}}
+    </p>
+
+    <!-- Show favorite status if marked as favorite -->
+    {{#if this.isFavorite}}
+    <p style="color: red;">❤️ Favorite</p>
+    {{/if}}
+
+    <!-- Add layer form. JavaScript handles it without submitting to the server -->
+    <div>
+        <label for="layers-{{this.combo_id}}">Add Layer:</label>
+        <select id="layers-{{this.combo_id}}" name="layer_id-{{this.combo_id}}">
+            <option value="">Select a layer</option>
+            {{#each ../layers}}
+            <option value="{{this.item_id}}">{{this.clothing_name}}</option>
+            {{/each}}
+        </select>
+        <button type="button" onclick="addLayer('{{this.combo_id}}')">Add Layer</button>
+    </div>
+
+    <!-- Form to mark as favorite, goes to the server when submitted -->
+    <form action="/favorite" method="POST" style="display:inline;">
+        <input type="hidden" name="combo_id" value="{{this.combo_id}}">
+        <input type="hidden" name="bottom_id" value="{{this.bottom_id}}">
+        <input type="hidden" name="top_id" value="{{this.top_id}}">
+        <input type="hidden" name="shoes_id" value="{{this.shoes_id}}">
+        <input type="hidden" name="bag_id" value="{{this.bag_id}}">
+        <input type="hidden" id="layer-input-{{this.combo_id}}" name="layer_id" value="{{this.layer.id}}">
+        <button type="submit">Favorite</button>
+    </form>
+</div>
+<hr>
+{{/each}}
+
+<script>
+    function addLayer(comboId) {
+        // Log the call to the function
+        console.log(`addLayer called for comboId: ${comboId}`);
+
+        // Get the selected layer ID and name from the dropdown
+        const layerSelect = document.getElementById(`layers-${comboId}`);
+        const layerId = layerSelect.value;
+        const layerName = layerSelect.options[layerSelect.selectedIndex].text;
+
+        // Log selected values for debugging
+        console.log(`Adding Layer for comboId: ${comboId}, Layer ID: ${layerId}, Layer Name: ${layerName}`);
+
+        if (layerId) {
+            // Update the combo details paragraph with the new layer
+            const comboDetails = document.getElementById(`combo-details-${comboId}`);
+            comboDetails.innerHTML += ` | Layer: ${layerName}`;
+
+            // Set the hidden layer input value for the favorite form
+            const layerInput = document.getElementById(`layer-input-${comboId}`);
+            layerInput.value = layerId;
+
+            // Reset the dropdown after adding the layer
+            layerSelect.value = "";
+        } else {
+            alert("Please select a layer to add.");
+        }
+    }
+</script>
